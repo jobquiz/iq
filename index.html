@@ -3,19 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MCQ Quiz Popup</title>
+  <title>MCQ Quiz (A/B/C/D)</title>
+
   <!-- Bootstrap CSS -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
-    /* বড় পপ আপ: modal-xl + প্রয়োজনে কাস্টম প্রস্থ */
-    .modal-xl { --bs-modal-width: 900px; } /* চাইলে 1140px+ পর্যন্ত নিতে পারেন */
-    .option-btn { text-align: left; margin-bottom: 10px; }
+    /* বড় পপ আপ */
+    .modal-xl { --bs-modal-width: 900px; }
 
-    /* আরও গাঢ় সবুজ (সঠিক) */
+    .question-card { padding: 16px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 18px; }
+    .answer-reveal { font-size: 0.95rem; margin-top: 6px; color: #444; }
+    .option-btn { text-align: left; margin-bottom: 10px; }
+    .option-btn:disabled { opacity: 1; cursor: default; }
+    .sticky-footer { position: sticky; bottom: 0; background: #fff; padding-top: 12px; border-top: 1px solid #eee; }
+
+    /* সঠিক: গভীর সবুজ */
     .option-btn.correct,
     .btn-success.correct {
       background-color: #0f8a2b !important;
@@ -29,7 +33,7 @@
       border-color: #0a5f1e !important;
     }
 
-    /* উজ্জ্বল লাল (ভুল) */
+    /* ভুল: উজ্জ্বল লাল */
     .option-btn.incorrect,
     .btn-danger.incorrect {
       background-color: #ff1f3d !important;
@@ -43,17 +47,27 @@
       border-color: #c50f27 !important;
     }
 
-    .option-btn:disabled { opacity: 1; cursor: default; }
-    .question-card { padding: 16px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 18px; }
-    .answer-reveal { font-size: 0.95rem; margin-top: 6px; color: #444; }
-    .sticky-footer { position: sticky; bottom: 0; background: #fff; padding-top: 12px; border-top: 1px solid #eee; }
+    /* অপশন লেবেল ব্যাজ (A/B/C/D) */
+    .opt-badge {
+      display: inline-block;
+      min-width: 28px;
+      height: 28px;
+      line-height: 26px;
+      text-align: center;
+      border-radius: 6px;
+      margin-right: 10px;
+      border: 1px solid #ddd;
+      background: #f7f7f7;
+      font-weight: 600;
+      color: #333;
+    }
   </style>
 </head>
 <body class="p-3">
 
   <div class="container">
-    <h3 class="mb-3">MCQ Quiz (Popup)</h3>
-    <p class="text-muted">নীচের বোতাম ক্লিক করলে বড় পপ-আপে ৫টি প্রশ্ন একসাথে আসবে। উত্তর সিলেক্ট করলেই সাথে সাথে সঠিক/ভুল দেখাবে।</p>
+    <h3 class="mb-3">MCQ Quiz (A/B/C/D)</h3>
+    <p class="text-muted">বোতাম চাপলেই বড় পপ-আপে ৫টি প্রশ্ন দেখাবে; অপশন হিসেবে A, B, C, D থাকবে।</p>
     <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#quizModal">
       কুইজ শুরু করুন
     </button>
@@ -64,7 +78,7 @@
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">৫টি তাত্ক্ষণিক MCQ</h5>
+          <h5 class="modal-title">৫টি তাত্ক্ষণিক MCQ (A/B/C/D)</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="বন্ধ করুন"></button>
         </div>
 
@@ -87,37 +101,40 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // ১) এখানে আপনার প্রশ্নগুলো সম্পাদনা করুন (question, options, correctIndex)
+    // অপশন লেবেলসমূহ
+    const LABELS = ["A", "B", "C", "D"]; // ০-ভিত্তিক
+
+    // প্রশ্নব্যাংক: correctIndex সবসময় ০-ভিত্তিক হবে (A=0, B=1, C=2, D=3)
     const QUESTION_BANK = [
       {
-       question: "বিখ্যাত মুনিপুরী নাচ বাংলাদেশের কোন অঞ্চলের?",
-        options: ["রংপুর", "বান্দারবান", "সুনামগঞ্জ", "কক্সবাজার"],
-        correctIndex: 2
+        question: "বাংলা বর্ণমালায় মোট কতটি স্বরবর্ণ আছে?",
+        options: ["৭", "১১", "১০", "১২"],
+        correctIndex: 1 // B
       },
       {
-        question: "সর্বদলীয় কেন্দ্রীয় রাষ্ট্রভাষা সংগ্রাম পরিষদের আহ্বায়ক কে ছিলেন?",
-        options: ["মওলানা ভাসানী", "আব্দুল মতিন", "কাজী গোলাম মাহবুব", "আবুল কাশেম"],
-        correctIndex: 2
+        question: "ইংরেজি শব্দ 'Chocolate' এর উৎস ভাষা কোনটি?",
+        options: ["লাতিন", "নাহুয়াতল", "গ্রিক", "ফরাসি"],
+        correctIndex: 1 // B
       },
       {
-        question: "মারমাদের বর্ষবরণ উৎসবের নাম কী?",
-        options: ["বিজু", "সাংগ্রাই", "ওয়াংগালা", "সোহরাই"],
-        correctIndex: 1
+        question: "HTML এর পূর্ণরূপ কী?",
+        options: ["Hyper Trainer Marking Language", "Hyper Text Markup Language", "High Text Machine Language", "Hyperlinks Text Markup Level"],
+        correctIndex: 1 // B
       },
       {
-        question: "ADB এর প্রতিবেদন অনুযায়ী, ইন্টারনেট ব্যবহারে দক্ষিণ এশিয়ায় শীর্ষ দেশ-",
-        options: ["ভারত", "ভুটান", "বাংলাদেশ", "নেপাল"],
-        correctIndex: 3
+        question: "CSS মূলত কোন কিছুর জন্য ব্যবহার করা হয়?",
+        options: ["ডাটাবেস", "স্টাইলিং", "সার্ভার-সাইড লজিক", "ইমেজ প্রসেসিং"],
+        correctIndex: 1 // B
       },
       {
-        question: "বিশ্বের সবচেয়ে বেশি তেলের মজুদ রয়েছে কোন দেশে?",
-        options: ["ভেনেজুয়েলা", "সৌদি আরব", "যুক্তরাষ্ট্র", "রাশিয়া "],
-        correctIndex: 0
-      },
-      // আরও প্রশ্ন যোগ করতে পারেন...
+        question: "JavaScript কোন ধরনের ভাষা?",
+        options: ["Markup", "Styling", "Programming", "Database"],
+        correctIndex: 2 // C
+      }
+      // ইচ্ছা করলে আরও প্রশ্ন যোগ করুন...
     ];
 
-    // ২) প্রতিবার ৫টি প্রশ্ন নেয়া (এলোমেলো করে প্রথম ৫টি)
+    // ৫টি প্রশ্ন এলোমেলোভাবে বাছাই
     function pickFiveRandom(arr) {
       const copy = [...arr];
       for (let i = copy.length - 1; i > 0; i--) {
@@ -128,7 +145,6 @@
     }
 
     let currentFive = [];
-    let answered = 0;
     let score = 0;
 
     const quizContainer = document.getElementById("quizContainer");
@@ -138,56 +154,57 @@
     function renderQuiz() {
       quizContainer.innerHTML = "";
       score = 0;
-      answered = 0;
       scoreLine.textContent = "স্কোর: 0 / 5";
-
       currentFive = pickFiveRandom(QUESTION_BANK);
 
-      currentFive.forEach((q, idx) => {
+      currentFive.forEach((q, qIdx) => {
         const card = document.createElement("div");
         card.className = "question-card";
 
         const title = document.createElement("h6");
         title.className = "mb-2";
-        title.textContent = `প্রশ্ন ${idx + 1}: ${q.question}`;
+        title.textContent = `প্রশ্ন ${qIdx + 1}: ${q.question}`;
         card.appendChild(title);
 
         const btnGroup = document.createElement("div");
+
         q.options.forEach((opt, oi) => {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "btn btn-outline-secondary option-btn w-100";
-          btn.textContent = opt;
+
+          // লেবেল + টেক্সট (A, B, C, D)
+          const label = LABELS[oi] || "?";
+          btn.innerHTML = `<span class="opt-badge">${label}</span> ${opt}`;
 
           btn.addEventListener("click", () => {
             if (btnGroup.dataset.locked === "1") return;
             btnGroup.dataset.locked = "1";
 
-            const correctIdx = q.correctIndex;
+            const correctIdx = Number(q.correctIndex); // ০-ভিত্তিক নিশ্চিত
             const kids = btnGroup.querySelectorAll("button");
+
+            // সব অপশন disable + সঠিকটিতে সবুজ
             kids.forEach((k, kidx) => {
               k.disabled = true;
               if (kidx === correctIdx) {
                 k.classList.remove("btn-outline-secondary");
-                // সঠিকটিতে গভীর সবুজ
                 k.classList.add("btn-success", "correct");
               }
             });
 
+            // নির্বাচিত অপশন সঠিক-ভুল নির্ধারণ
             if (oi === correctIdx) {
               score++;
             } else {
-              // ভুলটিতে উজ্জ্বল লাল
               btn.classList.remove("btn-outline-secondary");
               btn.classList.add("btn-danger", "incorrect");
-
               const reveal = document.createElement("div");
               reveal.className = "answer-reveal";
-              reveal.innerHTML = `সঠিক উত্তর: <strong>${q.options[correctIdx]}</strong>`;
+              reveal.innerHTML = `সঠিক উত্তর: <strong>${LABELS[correctIdx]}. ${q.options[correctIdx]}</strong>`;
               card.appendChild(reveal);
             }
 
-            answered++;
             scoreLine.textContent = `স্কোর: ${score} / 5`;
           });
 
@@ -199,17 +216,12 @@
       });
     }
 
-    // মডাল খোলার সাথে সাথে নতুন ৫টি প্রশ্ন রেন্ডার
+    // মডাল খোলার সাথে ৫টি প্রশ্ন রেন্ডার
     const quizModal = document.getElementById("quizModal");
-    quizModal.addEventListener("show.bs.modal", () => {
-      renderQuiz();
-    });
+    quizModal.addEventListener("show.bs.modal", renderQuiz);
 
     // আবার দিন
-    retryBtn.addEventListener("click", () => {
-      renderQuiz();
-    });
+    retryBtn.addEventListener("click", renderQuiz);
   </script>
 </body>
 </html>
-
